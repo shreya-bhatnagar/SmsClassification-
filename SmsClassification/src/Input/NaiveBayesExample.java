@@ -11,8 +11,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,14 +34,14 @@ public class NaiveBayesExample {
     public static String[] readLines(URL url) throws IOException {
 
         Reader fileReader = new InputStreamReader(url.openStream(), Charset.forName("UTF-8"));
-        List<String> lines;
-        try (BufferedReader bufferedReader = new BufferedReader(fileReader)) {
-            lines = new ArrayList<>();
+        List<String> lines = new ArrayList<String>();
+        BufferedReader bufferedReader = new BufferedReader(fileReader);
+            
             String line;
             while ((line = bufferedReader.readLine()) != null) {
                 lines.add(line);
             }
-        }
+        
         System.out.println("Array Size:"+lines.toArray(new String[lines.size()]).length);
         return lines.toArray(new String[lines.size()]);
         
@@ -58,58 +56,61 @@ public class NaiveBayesExample {
      */
     public static void main(String[] args) throws IOException {
        //ist<String> arguments = runtimeMxBean.getInputArguments();
+      // StringBuffer report = new StringBuffer();
        
         //map of dataset files
-        Map<String, URL> trainingFiles=null;
+        Map<String, URL> trainingFiles = new HashMap<String, URL>();
+
+        Map<String, String[]> trainingExamples = new HashMap<String, String[]>();
         NaiveBayes nb = new NaiveBayes();
-        Map<String, String[]> trainingExamples = new HashMap<>();  
-     for(int i=1;i<=3;i++){
-            switch (i) {
-                case 1:
-            trainingFiles = new HashMap<>();
-            trainingFiles.put("Trans", NaiveBayesExample.class.getResource("/datasets/training_data_trans.txt"));
-                    break;
-                case 2:
-            trainingFiles = new HashMap<>();
-            trainingFiles.put("Promo", NaiveBayesExample.class.getResource("/datasets/training_data_promo.txt")); 
-                    break; 
-                default:
-            trainingFiles = new HashMap<>();
-            trainingFiles.put("OTP", NaiveBayesExample.class.getResource("/datasets/training_data_otp.txt"));     
-                    break;
-            }
-      
-         //loading examples in memory
-       
+            
+        trainingFiles.put("OTP", NaiveBayesExample.class.getResource("/datasets/training_data_otp.txt"));
+       // trainingFiles.put("OTP", NaiveBayesExample.class.getResource("/datasets/training_30_OTP.txt"));
+        trainingFiles.put("Promo", NaiveBayesExample.class.getResource("/datasets/training_data_promo.txt"));
+       //trainingFiles.put("Promo", NaiveBayesExample.class.getResource("/datasets/training_30_PROMO.txt"));
+        trainingFiles.put("Trans", NaiveBayesExample.class.getResource("/datasets/training_data_trans.txt"));
+       // trainingFiles.put("Trans", NaiveBayesExample.class.getResource("/datasets/training_30_TRANS.txt"));
+        //loading examples in memory
         for(Map.Entry<String, URL> entry : trainingFiles.entrySet()) {
+            System.out.println("training Files size:"+trainingFiles.size());
             trainingExamples.put(entry.getKey(), readLines(entry.getValue()));
         } 
-        trainingFiles=null;
+        
+        System.out.println("Total Memory Before:"+Runtime.getRuntime().totalMemory());
+        System.out.println("Free Memory Before:"+Runtime.getRuntime().freeMemory());
+        System.out.println("Max Memory Before:"+Runtime.getRuntime().maxMemory());
+         trainingFiles=null;
         //train classifier
+        
         nb.setChisquareCriticalValue(6.63); //0.01 pvalue
-        System.gc();
+      //  System.gc();
+        System.out.println("trainingExamples.size:"+trainingExamples.size());
         nb.train(trainingExamples);
-     }
+        System.out.println("Total Memory After:"+Runtime.getRuntime().totalMemory());
+        System.out.println("Free Memory After:"+Runtime.getRuntime().freeMemory());
+        System.out.println("Max Memory After:"+Runtime.getRuntime().maxMemory());
+        
+        
         //get trained classifier knowledgeBase
         NaiveBayesKnowledgeBase knowledgeBase = nb.getKnowledgeBase();
         
         nb = null; 
         trainingExamples = null;
-        
+       //  System.out.println("trainingExamples.size after null:"+trainingExamples.size());
         //Use classifier and prediction
         nb = new NaiveBayes(knowledgeBase);
-          String DIRECTORY_PATH = "/home/shreya/NetBeansProjects/SmsClassification/src/datasets/";
-         List<String> test_data_lines = Files.readAllLines(Paths.get(DIRECTORY_PATH + "test_data.txt"));
-	 System.out.println(test_data_lines.size() + " lines read from " + Paths.get(DIRECTORY_PATH+ "trans.txt") );
-
-        for (int index = 0; index < 10; index++) {
-         
-         String incomingSMS = test_data_lines.get(index);
-         
+      //    String DIRECTORY_PATH = "/home/shreya/NetBeansProjects/SmsClassification/src/datasets/";
+       //  List<String> test_data_lines = Files.readAllLines(Paths.get(DIRECTORY_PATH + "test_data.txt"));
+	 //System.out.println(test_data_lines.size() + " lines read from " + Paths.get(DIRECTORY_PATH+ "test_data.txt") );
+     
+       // for (int index = 0; index < 1; index++) {
+    
+         //String incomingSMS = test_data_lines.get(index);
+         String incomingSMS="Update on SR: IM0001560719, Status: Closed. Sol ID: 2001 Sec: SIFY link is up. Branch is working on Pri: TATA. Please contact NOC at 18001032434 for any assistance.";
          String predicted_class = nb.predict(incomingSMS);
-         System.out.format("The sentense id="+index+" was classified as:", predicted_class);
+         System.out.format("The sentense:"+incomingSMS+" was classified as:"+ predicted_class);
 //        
-        }
+      //  }}
         
         
 //        String exampleEn = "Rs.2000.00 was withdrawn using your HDFC Bank Card ending 6476 on 2017-03-08:19:55:45 at +SITE NO 650 11TH MAIN. Avl bal: Rs.34654.23";
