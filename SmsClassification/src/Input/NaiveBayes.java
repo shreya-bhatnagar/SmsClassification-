@@ -56,6 +56,7 @@ public class NaiveBayes {
      * @param chisquareCriticalValue
      */
     public void setChisquareCriticalValue(double chisquareCriticalValue) {
+        System.out.println("setChisquare:"+chisquareCriticalValue);
         this.chisquareCriticalValue = chisquareCriticalValue;
         // System.out.
     }
@@ -67,7 +68,7 @@ public class NaiveBayes {
      * @return
      */
     private List<Document> preprocessDataset(Map<String, String[]> trainingDataset) {
-        List<Document> dataset = new ArrayList<>();
+        List<Document> dataset = new ArrayList<Document>();
 
         String category;
         String[] examples;
@@ -86,14 +87,14 @@ public class NaiveBayes {
                 //for each example in the category tokenize its text and convert it into a Document object.
                 doc = Tokenizer.tokenize(examples[i]);
                 doc.category = category;
-                // System.out.println("category:"+category);
+               //  System.out.println("category:"+category);
 
                 dataset.add(doc);
 
-                //examples[i] = null; //try freeing some memory
+                examples[i] = null; //try freeing some memory
             }
 
-            //it.remove(); //try freeing some memory
+            it.remove(); //try freeing some memory
         }
 
         return dataset;
@@ -139,6 +140,7 @@ public class NaiveBayes {
      * @throws IllegalArgumentException
      */
     public void train(Map<String, String[]> trainingDataset, Map<String, Double> categoryPriors) throws IllegalArgumentException {
+      
         //preprocess the given dataset
         List<Document> dataset = preprocessDataset(trainingDataset);
 
@@ -147,15 +149,15 @@ public class NaiveBayes {
 
         //intiliaze the knowledgeBase of the classifier
         knowledgeBase = new NaiveBayesKnowledgeBase();
-        knowledgeBase.n = featureStats.n; //number of observations
-        knowledgeBase.d = featureStats.featureCategoryJointCount.size(); //number of features
+        knowledgeBase.num_training_observations = featureStats.n; //number of observations
+        knowledgeBase.num_features = featureStats.featureCategoryJointCount.size(); //number of features
 
         //check is prior probabilities are given
         if (categoryPriors == null) {
             //if not estimate the priors from the sample
-            knowledgeBase.c = featureStats.categoryCounts.size(); //number of cateogries
+            knowledgeBase.num_categories = featureStats.categoryCounts.size(); //number of cateogries
             //c=number of categories
-            knowledgeBase.logPriors = new HashMap<>();
+            knowledgeBase.logPriors = new HashMap<String, Double>();
 
             String category;
             int count;
@@ -163,22 +165,26 @@ public class NaiveBayes {
                 category = entry.getKey();
                 count = entry.getValue();
                 //n=number of training observations
-                knowledgeBase.logPriors.put(category, Math.log((double) count / knowledgeBase.n));
-                System.out.println("catogries::" + category + ", priorProb:" + Math.log((double) count / knowledgeBase.n) + ", count:" + count + ", knowledgeBase.n=" + knowledgeBase.n);
+                knowledgeBase.logPriors.put(category, Math.log((double) count / knowledgeBase.num_training_observations));
+                System.out.println("catogries::" + category + ", priorProb:" + Math.log((double) count / knowledgeBase.num_training_observations) + ", count:" + count + ", knowledgeBase.n=" + knowledgeBase.num_training_observations+" knowledgeBase.c:"+knowledgeBase.num_categories+" knowledgeBase.d:"+knowledgeBase.num_features);
+                
+            }
+            for(Map.Entry entry : knowledgeBase.logPriors.entrySet() ){
+            System.out.println("knowBase.logPriors key:"+entry.getKey()+" knowBase.logPriors value:"+entry.getValue());
             }
         } else {
             //if they are provided then use the given priors
-            knowledgeBase.c = categoryPriors.size();
-
+            knowledgeBase.num_categories = categoryPriors.size();
+            System.out.println("knowledgeBase.c"+knowledgeBase.num_categories);
             //make sure that the given priors are valid
-            if (knowledgeBase.c != featureStats.categoryCounts.size()) {
+            if (knowledgeBase.num_categories != featureStats.categoryCounts.size()) {
                 throw new IllegalArgumentException("Invalid priors Array: Make sure you pass a prior probability for every supported category.");
             }
 
             String category;
             Double priorProbability;
             for (Map.Entry<String, Double> entry : categoryPriors.entrySet()) {
-                category = entry.getKey();
+                category = entry.getKey();   
                 priorProbability = entry.getValue();
                 if (priorProbability == null) {
                     throw new IllegalArgumentException("Invalid priors Array: Make sure you pass a prior probability for every supported category.");
@@ -191,7 +197,7 @@ public class NaiveBayes {
         }
 
         //We are performing laplace smoothing (also known as add-1). This requires to estimate the total feature occurrences in each category
-        Map<String, Double> featureOccurrencesInCategory = new HashMap<>();
+        Map<String, Double> featureOccurrencesInCategory = new HashMap<String, Double>();
 
         Integer occurrences;
         Double featureOccSum;
@@ -216,18 +222,18 @@ public class NaiveBayes {
             for (Map.Entry<String, Map<String, Integer>> entry : featureStats.featureCategoryJointCount.entrySet()) {
                 feature = entry.getKey();
 
-                System.out.println("Train method feature:" + feature + ", featureCategoryCounts:" + entry.getValue());
+               // System.out.println("Train method feature:" + feature + ", featureCategoryCounts:" + entry.getValue());
                 featureCategoryCounts = entry.getValue();
 
                 count = featureCategoryCounts.get(category);
-                System.out.println("count=featureCategoryCounts.get(category):" + featureCategoryCounts.get(category));
+             //   System.out.println("count=featureCategoryCounts.get(category):" + featureCategoryCounts.get(category));
                 if (count == null) {
                     count = 0;
                 }
                 //d=number of feature
-                logLikelihood = Math.log((count + 1.0) / (featureOccurrencesInCategory.get(category) + knowledgeBase.d));
-                prob=(count + 1.0) / (featureOccurrencesInCategory.get(category) + knowledgeBase.d);
-                System.out.println("logLikelihood:"+logLikelihood+" probability:"+prob);
+                logLikelihood = Math.log((count + 1.0) / (featureOccurrencesInCategory.get(category) + knowledgeBase.num_features));
+                prob=(count + 1.0) / (featureOccurrencesInCategory.get(category) + knowledgeBase.num_features);
+            //    System.out.println("logLikelihood:"+logLikelihood+" probability:"+prob);
                 if (knowledgeBase.logLikelihoods.containsKey(feature) == false) {
                     knowledgeBase.logLikelihoods.put(feature, new HashMap<String, Double>());
                 }
@@ -244,6 +250,7 @@ public class NaiveBayes {
      * @param trainingDataset
      */
     public void train(Map<String, String[]> trainingDataset) {
+        System.out.println("train Wrapper---");
         train(trainingDataset, null);
     }
 
@@ -262,7 +269,7 @@ public class NaiveBayes {
 
         //Tokenizes the text and creates a new document
         Document doc = Tokenizer.tokenize(text);
-        System.out.println("Document catogry:" + doc.tokens);
+       // System.out.println("Document catogry:" + doc.tokens);
 
         String category;
         String feature;
@@ -272,28 +279,28 @@ public class NaiveBayes {
         String maxScoreCategory = null;
         Double maxScore = Double.NEGATIVE_INFINITY;
 
-        //Map<String, Double> predictionScores = new HashMap<>();
-        for (Map.Entry<String, Double> entry1 : knowledgeBase.logPriors.entrySet()) {
-            category = entry1.getKey();
-            logprob = entry1.getValue(); //intialize the scores with the priors
+        Map<String, Double> predictionScores = new HashMap<String, Double>();
+        for (Map.Entry<String, Double> category_logProb_entry : knowledgeBase.logPriors.entrySet()) {
+            category = category_logProb_entry.getKey();
+            logprob = category_logProb_entry.getValue(); //intialize the scores with the priors
             System.out.println("logprob======" + logprob + " category:" + category);
             //foreach feature of the document
-            for (Map.Entry<String, Integer> entry2 : doc.tokens.entrySet()) {
-                feature = entry2.getKey();
+            for (Map.Entry<String, Integer> doc_token_entry : doc.tokens.entrySet()) {
+                feature = doc_token_entry.getKey();
                 //System.out.println("Feature:"+feature);
                 if (!knowledgeBase.logLikelihoods.containsKey(feature)) {
                     //logLikelihoods is hasmap of 
-                    // System.out.println("-------------->Feature NOT FOUND");
+                     System.out.println("category:"+category+"  feature:"+feature+"-------------->Feature NOT FOUND");
                     continue; //if the feature does not exist in the knowledge base skip it
                 }
 
-                occurrences = entry2.getValue(); //get its occurrences in text
-                //System.out.println("occurrences-------------->"+occurrences);
-                System.out.println("logLikelihoods.get(feature).get(category):" + knowledgeBase.logLikelihoods.get(feature).get(category));
+                occurrences = doc_token_entry.getValue(); //get its occurrences in text
+                System.out.println("category:"+category+" feature:"+feature+"  occurrences:"+occurrences);
+              //  System.out.println("logLikelihoodxts.get(feature).get(category):" + knowledgeBase.logLikelihoods.get(feature).get(category));
                 logprob += occurrences * knowledgeBase.logLikelihoods.get(feature).get(category); //multiply loglikelihood score with occurrences
             }
-            //predictionScores.put(category, logprob); 
-            System.out.println("logprob (occurence*knowledgeBase):" + logprob);
+          predictionScores.put(category, logprob); 
+            System.out.println("category:"+category+"  logprob (occurence*knowledgeBase):" + logprob+" current MaxScore:"+maxScore);
             if (logprob > maxScore) {
                 System.out.println("max score:" + maxScore);
                 maxScore = logprob;
