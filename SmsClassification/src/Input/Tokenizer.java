@@ -20,8 +20,9 @@ public class Tokenizer   {
      * lowercasing it.
      */
    public static String preprocess(String text) {
-        return text.replaceAll("[\\p{P}&&[^\u0025]]", " ").replaceAll("\\s+", " ").toLowerCase(Locale.getDefault());
-    }
+        return text.replaceAll("[0-9]", "").replaceAll(" XXXXXXXX.*", "").replaceAll("[\\p{P}&&[^\u0025]]", " ").replaceAll("\\s+", " ").toLowerCase(Locale.getDefault());
+       
+   }
     
     /**
      * A simple method to extract the keywords from the text. 
@@ -73,7 +74,7 @@ public class Tokenizer   {
     Tokenizer tok = new Tokenizer();
     Map<String, Integer> counts = new HashMap<String,Integer>();
     String preProcessed = tok.preprocess(sms2);
-    // System.out.print(preProcessed);
+    System.out.print(preProcessed);
    String[] keyWords = tok.extractKeywords(preProcessed);int i=0;
    while(i < keyWords.length)
    {
