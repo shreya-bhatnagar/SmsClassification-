@@ -65,7 +65,11 @@ public class FeatureExtraction {
                 //increase the number of occurrences of the feature in the category
                 stats.featureCategoryJointCount.get(feature).put(category, ++featureCategoryCount);
             }
-        }
+        if(stats.n%20000==0){
+               System.out.println("Input.FeatureExtraction.extractFeatureStats():"+stats.n+" sms done");
+         }
+
+	}
         
         return stats;
     }

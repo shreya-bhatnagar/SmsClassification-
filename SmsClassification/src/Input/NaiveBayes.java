@@ -87,7 +87,9 @@ public class NaiveBayes {
                 doc = Tokenizer.tokenize(examples[i]);
                 doc.category = category;
                 // System.out.println("category:"+category);
-
+		if(i%20000==0){
+                    System.out.println("Input.NaiveBayes.preprocessDataset():"+i+ " sms done");
+                }
                 dataset.add(doc);
 
                 //examples[i] = null; //try freeing some memory
