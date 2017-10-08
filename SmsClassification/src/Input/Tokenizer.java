@@ -20,8 +20,8 @@ public class Tokenizer   {
      * lowercasing it.
      */
    public static String preprocess(String text) {
-        return text.replaceAll("[\\p{P}&&[^\u0025]]", " ").replaceAll("\\s+", " ").toLowerCase(Locale.getDefault());
-    }
+    return text.replaceAll("[0-9]", "").replaceAll(" XXXXXXXX.*", "").replaceAll("[\\p{P}&&[^\u0025]]", " ").replaceAll("\\s+", " ").toLowerCase(Locale.getDefault());        
+   }
     
     /**
      * A simple method to extract the keywords from the text. 
